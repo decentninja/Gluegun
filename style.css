@@ -6,3 +6,7 @@ body {
 .link {
 	stroke: #ccc;
 }
+
+.link_label {
+	font: 10px sans-serif;
+}

@@ -1,7 +1,8 @@
 var elm = d3.select(".graph")
 var fill = d3.scale.category20()
-var graph = elm
-	.append("svg:svg")
+
+// Mouse handling
+var graph = elm.append("svg:svg")
 	.attr("pointer-events", "all")
 		.call(d3.behavior.zoom().on("zoom", function() {
 		graph.attr(
@@ -10,6 +11,12 @@ var graph = elm
 		)
 	}))
 	.append('svg:g')
+
+// Fade
+graph.style("opacity", 1e-6)
+	.transition()
+	.duration(1000)
+	.style("opacity", 1)
 
 
 var nodes = {}
@@ -84,6 +91,7 @@ addData({
 	]
 })
 
+// Force handling
 var force = d3.layout.force()
 	.gravity(0.05)
     .charge(-1500)
@@ -92,6 +100,7 @@ var force = d3.layout.force()
 	.nodes(d3.values(nodes))
 	.links(links)
 
+// Resize browser window
 function resize() {
 	width = window.innerWidth, height = window.innerHeight
 	graph.attr("width", width).attr("height", height)
@@ -99,6 +108,7 @@ function resize() {
 }
 resize()
 d3.select(window).on("resize", resize)
+
 
 force.start()
 
@@ -110,6 +120,18 @@ var link = graph.selectAll("line.link")
 	.attr("y1", function(d) { return d.source.y })
 	.attr("x2", function(d) { return d.target.x })
 	.attr("y2", function(d) { return d.target.y })
+	.attr("marker-end", function(d) { return "url(#" + d.type + ")" })
+
+var link_label = graph.append("svg:g").selectAll(".link_label")
+	.data(force.links())
+	.enter()
+	.append("svg:text")
+	.attr("class", "link_label")
+    .attr("text-anchor", "middle")
+	.text(function(d) {
+		return d.type
+	})
+	
 
 var node = graph.selectAll("circle.node")
 	.data(d3.values(nodes))
@@ -120,22 +142,17 @@ var node = graph.selectAll("circle.node")
 	.attr("r", 7.5)
 	.style("fill", function(d) { return fill(d.name)})
 
-var text = graph.append("svg:g").selectAll("g")
+var node_text = graph.append("svg:g").selectAll("g")
     .data(force.nodes())
-    .enter().append("svg:g")
-
-text.append("svg:text")
+    .enter()
+    .append("svg:text")
     .attr("x", 10)
     .attr("y", 6)
 	.text(function(d) {
 		return d.name
 	})
 
-graph.style("opacity", 1e-6)
-	.transition()
-	.duration(1000)
-	.style("opacity", 1)
-
+// Update
 force.on("tick", function() {
 	link.attr("x1", function(d) { return d.source.x })
 	    .attr("y1", function(d) { return d.source.y })
@@ -145,7 +162,15 @@ force.on("tick", function() {
 	node.attr("cx", function(d) { return d.x })
     	.attr("cy", function(d) { return d.y })
 
-    text.attr("transform", function(d) {
+    node_text.attr("transform", function(d) {
 		return "translate(" + d.x + "," + d.y + ")"
+	})
+
+	link_label.attr("transform", function(d) {
+		var x = (d.source.x + d.target.x) / 2
+		var y = (d.source.y + d.target.y) / 2
+		//var rotation = Math.atan2((d.source.x - d.target.x), (d.source.y - d.target.y)) * 57
+		return "translate(" + x + "," + y + ") "
+		//	+ "rotate(" + rotation + ")"
 	})
 })
